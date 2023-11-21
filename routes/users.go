@@ -9,4 +9,5 @@ func GetUserRoutes(a *fiber.App) {
 	route := a.Group("/api")
 
 	route.Post("/users/signup", controllers.CreateUser)
+	route.Get("/users/:id", controllers.DetailUser)
 }

@@ -14,3 +14,14 @@ func CreateUserQuery(db *gorm.DB, body *requests.CreateUserBody) (*models.User, 
 
 	return &user, nil
 }
+
+func DetailUserQuery(db *gorm.DB, id int) (*models.User, error) {
+	user := new(models.User)
+
+	// Unscoped: delete_at where 절에서 제거
+	if err := db.Table("users").Unscoped().First(&user, id).Error; err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
