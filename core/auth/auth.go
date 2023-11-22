@@ -85,7 +85,7 @@ func generateToken(id uint, expireTime time.Duration) (string, error) {
 }
 
 type TokenData struct {
-	UserID  int
+	UserID  uint
 	Expires int
 }
 
@@ -98,7 +98,7 @@ func GetTokenData(c *fiber.Ctx) (*TokenData, error) {
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if ok && token.Valid {
-		userID := int(claims["sub"].(float64))
+		userID := uint(claims["sub"].(float64))
 		expires := int(claims["exp"].(float64))
 
 		return &TokenData{
