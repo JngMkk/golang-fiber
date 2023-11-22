@@ -98,8 +98,8 @@ func GetTokenData(c *fiber.Ctx) (*TokenData, error) {
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if ok && token.Valid {
-		userID := claims["id"].(int)
-		expires := int(claims["expires"].(float64))
+		userID := int(claims["sub"].(float64))
+		expires := int(claims["exp"].(float64))
 
 		return &TokenData{
 			UserID:  userID,

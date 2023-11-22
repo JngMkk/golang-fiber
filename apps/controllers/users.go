@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/JngMkk/golang-fiber/apps/queries"
 	"github.com/JngMkk/golang-fiber/apps/schemas/requests"
@@ -85,22 +84,22 @@ func SignInUser(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(tokens)
 }
 
-// @Summary Get user by ID
+// @Summary Get user info by token
 // @Tags users
 // @Accept json
 // @Produce json
-// @Param id path int true "User ID"
+// @Security ApiKeyAuth
 // @Success 200 {object} responses.UserResp
 // @Failure 404 {object} handlers.HTTPError
 // @Failure 503 {object} handlers.HTTPError
-// @Router /users/{id} [get]
+// @Router /users/my [get]
 func DetailUser(c *fiber.Ctx) error {
-	id, err := strconv.Atoi(c.Params("id"))
+	data, err := auth.GetTokenData(c)
 	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(handlers.NewError(err))
+		return c.Status(http.StatusServiceUnavailable).JSON(handlers.NewError(err))
 	}
 	db := database.Connect()
-	user, err := queries.DetailUserQuery(db, id)
+	user, err := queries.DetailUserQuery(db, data.UserID)
 	if err != nil {
 		return c.Status(http.StatusNotFound).JSON(handlers.NewNotFound())
 	}
