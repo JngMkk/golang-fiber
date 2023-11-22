@@ -15,6 +15,15 @@ func SignUpQuery(db *gorm.DB, body *requests.SignUpBody) (*models.User, error) {
 	return &user, nil
 }
 
+func SignInQuery(db *gorm.DB, email string) (*models.User, error) {
+	user := new(models.User)
+	if err := db.Table("users").Where(&models.User{Email: email}).First(&user).Error; err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
 func DetailUserQuery(db *gorm.DB, id int) (*models.User, error) {
 	user := new(models.User)
 

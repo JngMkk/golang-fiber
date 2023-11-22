@@ -54,7 +54,7 @@ func CheckPassword(plain, hashed string) bool {
 }
 
 // Generate JWT Tokens(access, refresh)
-func GenereateTokens(id int) (*Tokens, error) {
+func GenereateTokens(id uint) (*Tokens, error) {
 	accessToken, err := generateToken(id, time.Minute*time.Duration(config.AccessTokenExpire))
 	if err != nil {
 		return nil, err
@@ -69,7 +69,7 @@ func GenereateTokens(id int) (*Tokens, error) {
 }
 
 // Generate Token
-func generateToken(id int, expireTime time.Duration) (string, error) {
+func generateToken(id uint, expireTime time.Duration) (string, error) {
 	// set claims
 	claims := jwt.MapClaims{
 		"sub": id,

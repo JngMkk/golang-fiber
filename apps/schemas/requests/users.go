@@ -8,10 +8,10 @@ import (
 
 type SignUpBody struct {
 	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password"`
+	Password string `json:"password" validate:"required"`
 }
 
-func (body *SignUpBody) Validate(c *fiber.Ctx, v *handlers.Validator) (*SignUpBody, error) {
+func (body *SignUpBody) ValidateSignUp(c *fiber.Ctx, v *handlers.Validator) (*SignUpBody, error) {
 	var err error
 	if err = v.Validate(body); err != nil {
 		return nil, err
@@ -24,5 +24,13 @@ func (body *SignUpBody) Validate(c *fiber.Ctx, v *handlers.Validator) (*SignUpBo
 	if err != nil {
 		return nil, err
 	}
+	return body, nil
+}
+
+func (body *SignUpBody) ValidateSignIn(c *fiber.Ctx, v *handlers.Validator) (*SignUpBody, error) {
+	if err := v.Validate(body); err != nil {
+		return nil, err
+	}
+
 	return body, nil
 }
