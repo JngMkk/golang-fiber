@@ -24,7 +24,7 @@ func SignInQuery(db *gorm.DB, email string) (*models.User, error) {
 	return user, nil
 }
 
-func DetailUserQuery(db *gorm.DB, id int) (*models.User, error) {
+func DetailUserQuery(db *gorm.DB, id uint) (*models.User, error) {
 	user := new(models.User)
 
 	// Unscoped: delete_at where 절에서 제거
