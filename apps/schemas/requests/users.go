@@ -6,17 +6,13 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type CreateUserBody struct {
+type SignUpBody struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password"`
 }
 
-func (body *CreateUserBody) Validate(c *fiber.Ctx, v *handlers.Validator) (*CreateUserBody, error) {
+func (body *SignUpBody) Validate(c *fiber.Ctx, v *handlers.Validator) (*SignUpBody, error) {
 	var err error
-
-	if err = c.BodyParser(body); err != nil {
-		return nil, err
-	}
 	if err = v.Validate(body); err != nil {
 		return nil, err
 	}

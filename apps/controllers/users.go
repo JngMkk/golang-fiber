@@ -16,22 +16,26 @@ import (
 // @Tags users
 // @Accept json
 // @Produce json
-// @Param user body requests.CreateUserBody true "User info for registration"
+// @Param user body requests.SignUpBody true "User info for registration"
 // @Success 201 {object} responses.UserResp
 // @Failure 409 {object} handlers.HTTPError
 // @Failure 422 {object} handlers.HTTPError
 // @Failure 503 {object} handlers.HTTPError
 // @Router /users/signup [post]
-func CreateUser(c *fiber.Ctx) error {
+func SignUpUser(c *fiber.Ctx) error {
+	body := &requests.SignUpBody{}
+	if err := c.BodyParser(body); err != nil {
+		return c.Status(http.StatusBadRequest).JSON(handlers.NewError(err))
+	}
+
 	v := handlers.NewValidator()
-	body := new(requests.CreateUserBody)
 	validBody, err := body.Validate(c, v)
 	if err != nil {
 		return c.Status(http.StatusUnprocessableEntity).JSON(handlers.NewError(err))
 	}
 
 	db := database.Connect()
-	user, err := queries.CreateUserQuery(db, validBody)
+	user, err := queries.SignUpQuery(db, validBody)
 	if err != nil {
 		return c.Status(http.StatusConflict).JSON(handlers.NewError(err))
 	}
