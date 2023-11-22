@@ -8,6 +8,6 @@ import (
 func GetUserRoutes(a *fiber.App) {
 	route := a.Group("/api")
 
-	route.Post("/users/signup", controllers.CreateUser)
+	route.Post("/users/signup", controllers.SignUpUser)
 	route.Get("/users/:id", controllers.DetailUser)
 }
