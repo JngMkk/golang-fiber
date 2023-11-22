@@ -25,22 +25,22 @@ import (
 func SignUpUser(c *fiber.Ctx) error {
 	body := &requests.SignUpBody{}
 	if err := c.BodyParser(body); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(handlers.NewError(err))
+		return handlers.NewHTTPResp(c, http.StatusBadRequest, err)
 	}
 
 	v := handlers.NewValidator()
 	validBody, err := body.ValidateSignUp(c, v)
 	if err != nil {
-		return c.Status(http.StatusUnprocessableEntity).JSON(handlers.NewError(err))
+		return handlers.NewHTTPResp(c, http.StatusUnprocessableEntity, err)
 	}
 
 	db := database.Connect()
 	user, err := queries.SignUpQuery(db, validBody)
 	if err != nil {
-		return c.Status(http.StatusConflict).JSON(handlers.NewError(err))
+		return handlers.NewHTTPResp(c, http.StatusConflict, err)
 	}
 
-	return c.Status(http.StatusCreated).JSON(responses.NewUserResponse(user))
+	return handlers.NewHTTPResp(c, http.StatusCreated, responses.NewUserResponse(user))
 }
 
 // @Summary Sign In user
@@ -58,30 +58,30 @@ func SignUpUser(c *fiber.Ctx) error {
 func SignInUser(c *fiber.Ctx) error {
 	body := &requests.SignUpBody{}
 	if err := c.BodyParser(body); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(handlers.NewError(err))
+		return handlers.NewHTTPResp(c, http.StatusBadRequest, err)
 	}
 
 	v := handlers.NewValidator()
 	validBody, err := body.ValidateSignIn(c, v)
 	if err != nil {
-		return c.Status(http.StatusUnprocessableEntity).JSON(handlers.NewError(err))
+		return handlers.NewHTTPResp(c, http.StatusUnprocessableEntity, err)
 	}
 
 	db := database.Connect()
 	user, err := queries.SignInQuery(db, validBody.Email)
 	if err != nil {
-		return c.Status(http.StatusNotFound).JSON(handlers.NewNotFound())
+		return handlers.NewHTTPResp(c, http.StatusNotFound, err)
 	}
 
 	if !auth.CheckPassword(validBody.Password, user.Password) {
-		return c.Status(http.StatusForbidden).JSON(handlers.NewAccessForbidden())
+		return handlers.NewHTTPResp(c, http.StatusForbidden, err)
 	}
 
 	tokens, err := auth.GenereateTokens(user.ID)
 	if err != nil {
-		return c.Status(http.StatusServiceUnavailable).JSON(handlers.NewError(err))
+		return handlers.NewHTTPResp(c, http.StatusServiceUnavailable, err)
 	}
-	return c.Status(http.StatusOK).JSON(tokens)
+	return handlers.NewHTTPResp(c, http.StatusOK, tokens)
 }
 
 // @Summary Get user info by token
@@ -96,13 +96,13 @@ func SignInUser(c *fiber.Ctx) error {
 func DetailUser(c *fiber.Ctx) error {
 	data, err := auth.GetTokenData(c)
 	if err != nil {
-		return c.Status(http.StatusServiceUnavailable).JSON(handlers.NewError(err))
+		return handlers.NewHTTPResp(c, http.StatusServiceUnavailable, err)
 	}
 	db := database.Connect()
 	user, err := queries.DetailUserQuery(db, data.UserID)
 	if err != nil {
-		return c.Status(http.StatusNotFound).JSON(handlers.NewNotFound())
+		return handlers.NewHTTPResp(c, http.StatusNotFound, err)
 	}
 
-	return c.Status(http.StatusOK).JSON(responses.NewUserResponse(user))
+	return handlers.NewHTTPResp(c, http.StatusOK, responses.NewUserResponse(user))
 }
