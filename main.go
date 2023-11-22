@@ -22,6 +22,7 @@ func main() {
 	app := fiber.New()
 
 	routes.GetUserRoutes(app)
+	routes.GetEventRoutes(app)
 	routes.GetSwaggerRoutes(app)
 
 	middlewares.FiberMiddleWare(app)
