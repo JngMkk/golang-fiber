@@ -29,5 +29,5 @@ func Connect() *gorm.DB {
 }
 
 func AutoMigrate(db *gorm.DB) {
-	db.AutoMigrate(&models.User{})
+	db.AutoMigrate(&models.User{}, &models.Event{})
 }
