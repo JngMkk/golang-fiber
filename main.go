@@ -9,6 +9,12 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// @title Fiber Example API
+// @version 1.0
+// @BasePath /api
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
 func main() {
 	db := database.Connect()
 	database.AutoMigrate(db)
