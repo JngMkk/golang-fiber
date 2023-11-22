@@ -10,4 +10,5 @@ func GetEventRoutes(a *fiber.App) {
 	route := a.Group("/api")
 
 	route.Post("/events", middlewares.JWTProtected(), controllers.CreateEvent)
+	route.Get("/events", middlewares.JWTProtected(), controllers.ListEvents)
 }

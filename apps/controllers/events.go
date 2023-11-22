@@ -50,3 +50,27 @@ func CreateEvent(c *fiber.Ctx) error {
 
 	return handlers.NewHTTPResp(c, http.StatusCreated, responses.NewEventResp(event))
 }
+
+// @Summary List Events
+// @Tags events
+// @Accept json
+// @Produce json
+// @Success 200 {object} responses.EventsResp
+// @Failure 401 {object} handlers.HTTPError
+// @Failure 503 {object} handlers.HTTPError
+// @Security ApiKeyAuth
+// @Router /events [get]
+func ListEvents(c *fiber.Ctx) error {
+	tokenData, err := auth.GetTokenData(c)
+	if err != nil {
+		return handlers.NewHTTPResp(c, http.StatusServiceUnavailable, err)
+	}
+
+	db := database.Connect()
+	events, err := queries.ListEventsQuery(db, tokenData.UserID)
+	if err != nil {
+		return handlers.NewHTTPResp(c, http.StatusServiceUnavailable, err)
+	}
+
+	return handlers.NewHTTPResp(c, http.StatusOK, responses.NewEventsResp(events))
+}

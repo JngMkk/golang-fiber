@@ -20,3 +20,12 @@ func CreateEventQuery(db *gorm.DB, body *requests.CreateEventBody, userID uint) 
 
 	return &event, nil
 }
+
+func ListEventsQuery(db *gorm.DB, userID uint) (*[]models.Event, error) {
+	events := new([]models.Event)
+	if err := db.Table("events").Where(&models.Event{UserID: userID}).Order("ID desc").Find(&events).Error; err != nil {
+		return nil, err
+	}
+
+	return events, nil
+}
