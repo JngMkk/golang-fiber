@@ -107,3 +107,28 @@ func DetailUser(c *fiber.Ctx) error {
 
 	return handlers.NewHTTPResp(c, http.StatusOK, responses.NewUserResponse(user))
 }
+
+// @Summary Re-issue user token
+// @Tags users
+// @Accept json
+// @Produce json
+// @Success 200 {object} responses.TokenResp
+// @Failure 403 {object} handlers.HTTPError
+// @Failure 503 {object} handlers.HTTPError
+// @Router /users/reissue [post]
+func ReIssueUserToken(c *fiber.Ctx) error {
+	userID, err := auth.ValidateRefreshToken(c)
+	if !(userID > 0) && err != nil {
+		return handlers.NewHTTPResp(c, http.StatusServiceUnavailable, err)
+	} else if !(userID > 0) && err == nil {
+		return handlers.NewHTTPResp(c, http.StatusForbidden, err)
+	}
+
+	accessT, refreshT, err := auth.GenereateTokens(userID)
+	if err != nil {
+		return handlers.NewHTTPResp(c, http.StatusServiceUnavailable, err)
+	}
+
+	c = auth.SetRefreshTokenCookie(c, refreshT)
+	return handlers.NewHTTPResp(c, http.StatusOK, responses.NewTokenResp(accessT))
+}
