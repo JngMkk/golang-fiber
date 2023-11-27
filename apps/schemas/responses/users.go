@@ -20,3 +20,11 @@ func NewUserResponse(u *models.User) *UserResp {
 	res.IsActive = u.IsActive
 	return res
 }
+
+type TokenResp struct {
+	AccessToken string `json:"accessToken"`
+}
+
+func NewTokenResp(token string) *TokenResp {
+	return &TokenResp{AccessToken: token}
+}

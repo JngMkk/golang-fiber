@@ -48,7 +48,7 @@ func SignUpUser(c *fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param user body requests.SignUpBody true "User info for login"
-// @Success 200 {object} auth.Tokens
+// @Success 200 {object} responses.TokenResp
 // @Failure 400 {object} handlers.HTTPError
 // @Failure 403 {object} handlers.HTTPError
 // @Failure 404 {object} handlers.HTTPError
@@ -77,11 +77,12 @@ func SignInUser(c *fiber.Ctx) error {
 		return handlers.NewHTTPResp(c, http.StatusForbidden, err)
 	}
 
-	tokens, err := auth.GenereateTokens(user.ID)
+	accessT, refreshT, err := auth.GenereateTokens(user.ID)
 	if err != nil {
 		return handlers.NewHTTPResp(c, http.StatusServiceUnavailable, err)
 	}
-	return handlers.NewHTTPResp(c, http.StatusOK, tokens)
+	c = auth.SetRefreshTokenCookie(c, refreshT)
+	return handlers.NewHTTPResp(c, http.StatusOK, responses.NewTokenResp(accessT))
 }
 
 // @Summary Get user info by token
@@ -94,7 +95,7 @@ func SignInUser(c *fiber.Ctx) error {
 // @Failure 503 {object} handlers.HTTPError
 // @Router /users/my [get]
 func DetailUser(c *fiber.Ctx) error {
-	data, err := auth.GetTokenData(c)
+	data, err := auth.GetAccessTokenData(c)
 	if err != nil {
 		return handlers.NewHTTPResp(c, http.StatusServiceUnavailable, err)
 	}

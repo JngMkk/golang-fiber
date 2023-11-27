@@ -37,7 +37,7 @@ func CreateEvent(c *fiber.Ctx) error {
 		return handlers.NewHTTPResp(c, http.StatusUnprocessableEntity, err)
 	}
 
-	tokenData, err := auth.GetTokenData(c)
+	tokenData, err := auth.GetAccessTokenData(c)
 	if err != nil {
 		return handlers.NewHTTPResp(c, http.StatusServiceUnavailable, err)
 	}
@@ -61,7 +61,7 @@ func CreateEvent(c *fiber.Ctx) error {
 // @Security ApiKeyAuth
 // @Router /events [get]
 func ListEvents(c *fiber.Ctx) error {
-	tokenData, err := auth.GetTokenData(c)
+	tokenData, err := auth.GetAccessTokenData(c)
 	if err != nil {
 		return handlers.NewHTTPResp(c, http.StatusServiceUnavailable, err)
 	}
