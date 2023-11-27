@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/JngMkk/golang-fiber/core/cache"
@@ -12,24 +11,19 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type Tokens struct {
-	AccessToken  string `json:"accessToken"`
-	RefreshToken string `json:"refreshToken"`
-}
-
 // Generate JWT Tokens(access, refresh)
-func GenereateTokens(id uint) (*Tokens, error) {
+func GenereateTokens(id uint) (string, string, error) {
 	accessToken, err := generateAccessToken(id)
 	if err != nil {
-		return nil, err
+		return "", "", err
 	}
 
 	refreshToken, err := generateRefreshToken(id)
 	if err != nil {
-		return nil, err
+		return "", "", err
 	}
 
-	return &Tokens{AccessToken: accessToken, RefreshToken: refreshToken}, nil
+	return accessToken, refreshToken, nil
 }
 
 // Generate Access Token
@@ -81,53 +75,15 @@ func saveRefreshToken(id uint, token string) error {
 	return err
 }
 
-type TokenData struct {
-	UserID  uint
-	Expires int
-}
+func SetRefreshTokenCookie(c *fiber.Ctx, token string) *fiber.Ctx {
+	cookie := new(fiber.Cookie)
+	cookie.Name = "refreshToken"
+	cookie.Value = token
+	cookie.Expires = time.Now().Add(time.Hour * 1)
+	cookie.HTTPOnly = true // JavaScript 접근 방지
+	// cookie.Secure = true   // HTTPS를 통해서만 전송
+	cookie.SameSite = "Lax"
+	c.Cookie(cookie)
 
-// Get data by token
-func GetTokenData(c *fiber.Ctx) (*TokenData, error) {
-	token, err := verifyToken(c)
-	if err != nil {
-		return nil, err
-	}
-
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if ok && token.Valid {
-		userID := uint(claims["sub"].(float64))
-		expires := int(claims["exp"].(float64))
-
-		return &TokenData{
-			UserID:  userID,
-			Expires: expires,
-		}, nil
-	}
-
-	return nil, err
-}
-
-func verifyToken(c *fiber.Ctx) (*jwt.Token, error) {
-	token := getToken(c)
-
-	t, err := jwt.Parse(token, jwtKeyFunc)
-	if err != nil {
-		return nil, err
-	}
-
-	return t, nil
-}
-
-func getToken(c *fiber.Ctx) string {
-	auth := c.Get("Authorization")
-
-	token := strings.Split(auth, " ")
-	if len(token) == 2 {
-		return token[1]
-	}
-	return ""
-}
-
-func jwtKeyFunc(token *jwt.Token) (interface{}, error) {
-	return []byte(config.JWTSecret), nil
+	return c
 }
