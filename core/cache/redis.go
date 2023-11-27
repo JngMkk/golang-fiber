@@ -1,0 +1,29 @@
+package cache
+
+import (
+	"sync"
+
+	"github.com/redis/go-redis/v9"
+)
+
+var (
+	redisConn      *redis.Client
+	redisConnMutex sync.Mutex
+)
+
+func Connect() *redis.Client {
+	redisConnMutex.Lock()
+	defer redisConnMutex.Unlock()
+
+	if redisConn == nil {
+		url := "redis://localhost:6379/0"
+		opts, err := redis.ParseURL(url)
+		if err != nil {
+			panic(err)
+		}
+
+		redisConn = redis.NewClient(opts)
+	}
+
+	return redisConn
+}

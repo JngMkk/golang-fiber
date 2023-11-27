@@ -1,15 +1,15 @@
 package auth
 
 import (
-	"errors"
-	"regexp"
+	"context"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/JngMkk/golang-fiber/core/cache"
 	"github.com/JngMkk/golang-fiber/core/config"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type Tokens struct {
@@ -17,50 +17,14 @@ type Tokens struct {
 	RefreshToken string `json:"refreshToken"`
 }
 
-func ValidatePassword(pw string) error {
-	if len(pw) < 8 || len(pw) > 16 {
-		return errors.New("password must be between 8 and 16 characters")
-	}
-
-	hasLower := regexp.MustCompile(`[a-z]`)
-	hasCapital := regexp.MustCompile(`[A-Z]`)
-	hasDigit := regexp.MustCompile(`\d`)
-	hasSpecial := regexp.MustCompile(`[!@#$%^&*]`)
-
-	if !hasLower.MatchString(pw) {
-		return errors.New("password must contain at least one lower letter")
-	}
-	if !hasCapital.MatchString(pw) {
-		return errors.New("password must contain at least one capital letter")
-	}
-	if !hasDigit.MatchString(pw) {
-		return errors.New("password must contain at least one digit")
-	}
-	if !hasSpecial.MatchString(pw) {
-		return errors.New("password must contain at least one special character")
-	}
-
-	return nil
-}
-
-func HashPassword(pw string) (string, error) {
-	hashed, err := bcrypt.GenerateFromPassword([]byte(pw), bcrypt.DefaultCost)
-	return string(hashed), err
-}
-
-func CheckPassword(plain, hashed string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hashed), []byte(plain))
-	return err == nil
-}
-
 // Generate JWT Tokens(access, refresh)
 func GenereateTokens(id uint) (*Tokens, error) {
-	accessToken, err := generateToken(id, time.Minute*time.Duration(config.AccessTokenExpire))
+	accessToken, err := generateAccessToken(id)
 	if err != nil {
 		return nil, err
 	}
 
-	refreshToken, err := generateToken(id, time.Hour*time.Duration(config.RefreshTokenExpire))
+	refreshToken, err := generateRefreshToken(id)
 	if err != nil {
 		return nil, err
 	}
@@ -68,13 +32,38 @@ func GenereateTokens(id uint) (*Tokens, error) {
 	return &Tokens{AccessToken: accessToken, RefreshToken: refreshToken}, nil
 }
 
-// Generate Token
-func generateToken(id uint, expireTime time.Duration) (string, error) {
-	// set claims
+// Generate Access Token
+func generateAccessToken(id uint) (string, error) {
 	claims := jwt.MapClaims{
 		"sub": id,
-		"exp": time.Now().Add(expireTime).Unix(),
+		"exp": time.Now().Add(time.Minute * time.Duration(config.AccessTokenExpire)).Unix(),
 	}
+	token, err := generateTokenString(claims)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
+}
+
+// Generate Refresh Token
+func generateRefreshToken(id uint) (string, error) {
+	claims := jwt.MapClaims{
+		"sub": id,
+		"exp": time.Now().Add(time.Hour * time.Duration(config.RefreshTokenExpire)).Unix(),
+	}
+	token, err := generateTokenString(claims)
+	if err != nil {
+		return "", err
+	}
+	if err := saveRefreshToken(id, token); err != nil {
+		return "", err
+	}
+
+	return token, nil
+}
+
+func generateTokenString(claims jwt.MapClaims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	t, err := token.SignedString([]byte(config.JWTSecret))
 	if err != nil {
@@ -82,6 +71,14 @@ func generateToken(id uint, expireTime time.Duration) (string, error) {
 	}
 
 	return t, nil
+}
+
+// Save Refresh Token in Redis
+func saveRefreshToken(id uint, token string) error {
+	ctx := context.Background()
+	rConn := cache.Connect()
+	err := rConn.Set(ctx, strconv.FormatUint(uint64(id), 10), token, time.Hour*1).Err()
+	return err
 }
 
 type TokenData struct {
