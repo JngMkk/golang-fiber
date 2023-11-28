@@ -41,7 +41,7 @@ func GetAccessTokenData(c *fiber.Ctx) (*TokenData, error) {
 func verifyAccessToken(c *fiber.Ctx) (*jwt.Token, error) {
 	token := getAccessToken(c)
 
-	t, err := jwt.Parse(token, jwtKeyFunc)
+	t, err := parseToken(token)
 	if err != nil {
 		return nil, err
 	}
@@ -61,30 +61,44 @@ func getAccessToken(c *fiber.Ctx) string {
 
 // validate refresh token
 func ValidateRefreshToken(c *fiber.Ctx) (uint, error) {
-	token, err := getRefreshTokenFromCookie(c)
+	token, err := verifyRefreshToken(c)
 	if err != nil {
 		return 0, err
 	}
 
-	t, err := jwt.Parse(token, jwtKeyFunc)
-	if err != nil {
-		return 0, err
-	}
-
-	claims, ok := t.Claims.(jwt.MapClaims)
-	if ok && t.Valid {
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if ok && token.Valid {
 		userID := uint(claims["sub"].(float64))
 		storedToken, err := getRefreshTokenFromCache(userID)
 		if err != nil {
 			return 0, err
 		}
 
-		if token == storedToken {
+		tokenString, err := token.SignedString(config.JWTSecret)
+		if err != nil {
+			return 0, err
+		}
+
+		if tokenString == storedToken {
 			return userID, nil
 		}
 	}
 
 	return 0, nil
+}
+
+func verifyRefreshToken(c *fiber.Ctx) (*jwt.Token, error) {
+	token, err := getRefreshTokenFromCookie(c)
+	if err != nil {
+		return nil, err
+	}
+
+	t, err := parseToken(token)
+	if err != nil {
+		return nil, err
+	}
+
+	return t, nil
 }
 
 // refresh token from cookie
@@ -107,6 +121,15 @@ func getRefreshTokenFromCache(id uint) (string, error) {
 	}
 
 	return storedToken, nil
+}
+
+func parseToken(token string) (*jwt.Token, error) {
+	t, err := jwt.Parse(token, jwtKeyFunc)
+	if err != nil {
+		return nil, err
+	}
+
+	return t, nil
 }
 
 func jwtKeyFunc(token *jwt.Token) (interface{}, error) {
