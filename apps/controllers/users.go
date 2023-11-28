@@ -132,3 +132,25 @@ func ReIssueUserToken(c *fiber.Ctx) error {
 	c = auth.SetRefreshTokenCookie(c, refreshT)
 	return handlers.NewHTTPResp(c, http.StatusOK, responses.NewTokenResp(accessT))
 }
+
+// @Summary Sign out user
+// @Tags users
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Success 200
+// @Failure 403 {object} handlers.HTTPError
+// @Failure 503 {object} handlers.HTTPError
+// @Router /users/signout [post]
+func SignOutUser(c *fiber.Ctx) error {
+	var err error
+
+	c, err = auth.DeleteRefreshToken(c)
+	if c != nil && err != nil {
+		return handlers.NewHTTPResp(c, http.StatusServiceUnavailable, err)
+	} else if c == nil && err != nil {
+		return handlers.NewHTTPResp(c, http.StatusForbidden, err)
+	}
+
+	return handlers.NewHTTPResp(c, http.StatusOK, nil)
+}

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/JngMkk/golang-fiber/core/cache"
 	"github.com/JngMkk/golang-fiber/core/config"
@@ -74,7 +75,7 @@ func ValidateRefreshToken(c *fiber.Ctx) (uint, error) {
 			return 0, err
 		}
 
-		tokenString, err := token.SignedString(config.JWTSecret)
+		tokenString, err := token.SignedString([]byte(config.JWTSecret))
 		if err != nil {
 			return 0, err
 		}
@@ -121,6 +122,44 @@ func getRefreshTokenFromCache(id uint) (string, error) {
 	}
 
 	return storedToken, nil
+}
+
+func DeleteRefreshToken(c *fiber.Ctx) (*fiber.Ctx, error) {
+	userID, err := ValidateRefreshToken(c)
+	if !(userID > 0) && err != nil {
+		return nil, err
+	} else if !(userID > 0) && err == nil {
+		return c, err
+	}
+	c = deleteRefreshTokenFromCookie(c)
+	err = deleteRefreshTokenFromCache(userID)
+	if err != nil {
+		return c, err
+	}
+
+	return c, nil
+}
+
+func deleteRefreshTokenFromCookie(c *fiber.Ctx) *fiber.Ctx {
+	c.Cookie(&fiber.Cookie{
+		Name:     "refreshToken",
+		Value:    "",
+		Expires:  time.Unix(0, 0),
+		HTTPOnly: true,
+	})
+
+	return c
+}
+
+func deleteRefreshTokenFromCache(id uint) error {
+	ctx := context.Background()
+	rConn := cache.Connect()
+	err := rConn.Del(ctx, strconv.FormatUint(uint64(id), 10)).Err()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func parseToken(token string) (*jwt.Token, error) {

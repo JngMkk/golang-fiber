@@ -12,5 +12,6 @@ func GetUserRoutes(a *fiber.App) {
 	route.Post("/users/signup", controllers.SignUpUser)
 	route.Post("/users/signin", controllers.SignInUser)
 	route.Post("/users/reissue", controllers.ReIssueUserToken)
+	route.Post("/users/signout", middlewares.JWTProtected(), controllers.SignOutUser)
 	route.Get("/users/:id", middlewares.JWTProtected(), controllers.DetailUser)
 }
