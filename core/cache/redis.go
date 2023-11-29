@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"os"
 	"sync"
 
 	"github.com/redis/go-redis/v9"
@@ -16,7 +17,7 @@ func Connect() *redis.Client {
 	defer redisConnMutex.Unlock()
 
 	if redisConn == nil {
-		url := "redis://localhost:6379/0"
+		url := os.Getenv("REDIS_URL")
 		opts, err := redis.ParseURL(url)
 		if err != nil {
 			panic(err)

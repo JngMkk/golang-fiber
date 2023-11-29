@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/JngMkk/golang-fiber/apps/models"
@@ -10,7 +11,7 @@ import (
 )
 
 func Connect() *gorm.DB {
-	dsn := "root:1234@tcp(127.0.0.1:3306)/test?charset=utf8mb4&parseTime=true"
+	dsn := os.Getenv("MYSQL_DSN")
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		fmt.Println("DB connection Error: ", err)
