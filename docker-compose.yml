@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  app:
+    container_name: backend
+    working_dir: /build
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - "3001:3001"
+    depends_on:
+      - redis
+      - mysql
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      MYSQL_DSN: "${MYSQL_USER}:${MYSQL_USER_PW}@tcp(mysql:3306)/${MYSQL_DB}?charset=utf8mb4&parseTime=true"
+
+  redis:
+    container_name: backend-redis
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  mysql:
+    container_name: backend-mysql
+    image: mysql:latest
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PW}
+    volumes:
+      - ./sql/:/docker-entrypoint-initdb.d
